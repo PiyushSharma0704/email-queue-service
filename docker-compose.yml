@@ -1,0 +1,11 @@
+version: "3.9"
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: email-queue-redis
+
+    ports:
+      - "6379:6379"
+
+    restart: unless-stopped
