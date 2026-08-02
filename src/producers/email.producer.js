@@ -2,7 +2,7 @@ const emailQueue = require("../queues/email.queue");
 
 const addEmailJob = async (emailData) => {
   return await emailQueue.add("send-email", emailData, {
-    delay: 30000,
+    // delay: 30000,
 
     attempts: 3,
 

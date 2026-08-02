@@ -1,37 +1,9 @@
-// const { Worker } = require("bullmq");
-
-// const redis = require("../config/redis");
-
-// const { sendEmail } = require("../services/email.service");
-
-// const emailWorker = new Worker(
-//   "email-queue",
-//   async (job) => {
-//     console.log(`Processing Job #${job.id}`);
-
-//     await sendEmail(job.data);
-//   },
-//   {
-//     connection: redis,
-//   }
-// );
-
-// emailWorker.on("completed", (job) => {
-//   console.log(`Job ${job.id} completed`);
-// });
-
-// emailWorker.on("failed", (job, err) => {
-//   console.log(`Job ${job?.id} failed`);
-//   console.log(err.message);
-// });
-
-// console.log("👷 Email Worker Started");
-
 const { Worker } = require("bullmq");
 
 const redis = require("../config/redis");
 
 const { sendEmail } = require("../services/email.service");
+const deadLetterQueue = require("../queues/dead-letter.queue");
 
 const worker = new Worker(
   "email-queue",
@@ -49,17 +21,27 @@ const worker = new Worker(
   },
   {
     connection: redis,
-  }
+  },
 );
 
 worker.on("completed", (job) => {
   console.log(`✅ Job ${job.id} completed`);
 });
 
-worker.on("failed", (job, err) => {
-  console.log(`❌ Job ${job.id} failed`);
+worker.on("failed", async (job, err) => {
+  console.log(`Job ${job.id} failed`);
 
-  console.log(err.message);
+  // Only move after the final retry
+  if (job.attemptsMade === job.opts.attempts) {
+    await deadLetterQueue.add("dead-email", {
+      jobId: job.id,
+      reason: err.message,
+      payload: job.data,
+      failedAt: new Date().toISOString(),
+    });
+
+    console.log("Moved to Dead Letter Queue");
+  }
 });
 
 console.log("Worker Started");
