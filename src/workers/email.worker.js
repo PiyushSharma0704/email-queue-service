@@ -5,7 +5,7 @@ const redis = require("../config/redis");
 const { sendEmail } = require("../services/email.service");
 const deadLetterQueue = require("../queues/dead-letter.queue");
 
-const worker = new Worker(
+const emailWorker = new Worker(
   "email-queue",
   async (job) => {
     console.log("====================================");
@@ -24,11 +24,11 @@ const worker = new Worker(
   },
 );
 
-worker.on("completed", (job) => {
+emailWorker.on("completed", (job) => {
   console.log(`✅ Job ${job.id} completed`);
 });
 
-worker.on("failed", async (job, err) => {
+emailWorker.on("failed", async (job, err) => {
   console.log(`Job ${job.id} failed`);
 
   // Only move after the final retry
@@ -45,3 +45,5 @@ worker.on("failed", async (job, err) => {
 });
 
 console.log("Worker Started");
+
+module.exports = emailWorker;

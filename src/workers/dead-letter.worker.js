@@ -2,7 +2,7 @@ const { Worker } = require("bullmq");
 
 const redis = require("../config/redis");
 
-const worker = new Worker(
+const deadLetterWorker = new Worker(
   "dead-letter-queue",
   async (job) => {
     console.log("================================");
@@ -18,3 +18,5 @@ const worker = new Worker(
 );
 
 console.log("💀 DLQ Worker Started");
+
+module.exports = deadLetterWorker;
