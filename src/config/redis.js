@@ -4,6 +4,9 @@ const env = require("./env");
 const redis = new Redis({
   host: env.REDIS_HOST,
   port: env.REDIS_PORT,
+
+  // Required by BullMQ workers
+  maxRetriesPerRequest: null,
 });
 
 redis.on("connect", () => {
